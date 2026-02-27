@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tareas - Login</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<div class="container sm">
+    <h1>Tareas</h1>
+    <p>Inicio de Sesión</p>
+
+    <div class="card">
+
+        <div class="row">
+            <div>
+                <label>Usuario</label>
+                <input id="user" placeholder="user95954" autocomplete="username" />
+            </div>
+            <div>
+                <label>Password</label>
+                <input id="pass" type="password" placeholder="1234" autocomplete="current-password" />
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:12px;">
+            <button class="btn primary" onclick="entrar()">Entrar</button>
+            <button class="btn" onclick="registrar()">Registrar</button>
+        </div>
+
+        <div id="msg" class="msg"></div>
+        <div class="footerHint">Tip: si registrás, después tocá “Entrar”.</div>
+    </div>
+</div>
+
+<script>
+    const KEYS = { base:"tm_base", user:"tm_user", pass:"tm_pass" };
+
+    // precargar si ya había datos
+    document.getElementById("baseUrl").value = sessionStorage.getItem(KEYS.base) || "http://localhost:3035";
+    document.getElementById("user").value = sessionStorage.getItem(KEYS.user) || "";
+    document.getElementById("pass").value = sessionStorage.getItem(KEYS.pass) || "";
+
+    function setMsg(text, ok=true){
+        const el = document.getElementById("msg");
+        el.textContent = text;
+        el.className = "msg " + (ok ? "ok" : "bad");
+    }
+
+    function basicHeader(user, pass){
+        return "Basic " + btoa(user + ":" + pass);
+    }
+
+    async function entrar(){
+        const baseUrl = window.location.origin;
+        const user = document.getElementById("user").value.trim();
+        const pass = document.getElementById("pass").value;
+
+        if(!user || !pass){
+            setMsg("Completa usuario y password", false);
+            return;
+        }
+
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/mias", {
+                method: "GET",
+                headers: { "Authorization": basicHeader(user, pass) }
+            });
+
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+
+            sessionStorage.setItem(KEYS.base, baseUrl);
+            sessionStorage.setItem(KEYS.user, user);
+            sessionStorage.setItem(KEYS.pass, pass);
+
+            window.location.href = "dashboard.html";
+        }catch(e){
+            setMsg("No pude autenticar (" + e.message + ")", false);
+        }
+    }
+
+    async function registrar(){
+        const baseUrl = window.location.origin;
+        const user = document.getElementById("user").value.trim();
+        const pass = document.getElementById("pass").value;
+
+        if(!user || !pass){
+            setMsg("Para registrar: completa usuario y password", false);
+            return;
+        }
+
+        try{
+            const res = await fetch(baseUrl + "/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type":"application/json" },
+                body: JSON.stringify({ usuario: user, password: pass })
+            });
+
+            if(!res.ok){
+                const txt = await res.text().catch(()=> "");
+                throw new Error(res.status + " " + res.statusText + " " + txt);
+            }
+
+            setMsg("Usuario creado ✅ Ahora tocá Entrar.", true);
+        }catch(e){
+            setMsg("No se pudo registrar: " + e.message, false);
+        }
+    }
+</script>
+
+</body>
+</html>

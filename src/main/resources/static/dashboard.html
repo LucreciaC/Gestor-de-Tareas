@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tareas</title>
+    <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+
+<div class="container">
+    <div class="top">
+        <div>
+            <h1>Mis tareas</h1>
+            <div class="badgeLine">
+                Usuario: <code id="userLabel"></code>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button class="btn" onclick="cargar()">Actualizar</button>
+            <button class="btn danger" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div id="msg" class="msg"></div>
+
+    <div class="card">
+        <h3 style="margin:0 0 8px;">Nueva tarea</h3>
+
+        <label>Título</label>
+        <input id="titulo" placeholder="Ej: Estudiar Spring" />
+
+        <label>Descripción</label>
+        <textarea id="descripcion" placeholder="..."></textarea>
+
+        <div class="actions" style="margin-top:10px;">
+            <button class="btn primary" onclick="crear()">Crear</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:14px;">
+        <h3 style="margin:0 0 8px;">Lista</h3>
+
+        <table>
+            <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th style="width:160px;">Estado</th>
+                <th style="width:320px;">Acciones</th>
+            </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const KEYS = { base:"tm_base", user:"tm_user", pass:"tm_pass" };
+
+    const baseUrl = sessionStorage.getItem(KEYS.base);
+    const user = sessionStorage.getItem(KEYS.user);
+    const pass = sessionStorage.getItem(KEYS.pass);
+
+    if(!baseUrl || !user || !pass){
+        window.location.href = "login.html";
+    }
+
+
+    document.getElementById("userLabel").textContent = user;
+
+    function setMsg(text, ok=true){
+        const el = document.getElementById("msg");
+        el.textContent = text;
+        el.className = "msg " + (ok ? "ok" : "bad");
+    }
+
+    function authOnly(){
+        return { "Authorization": "Basic " + btoa(user + ":" + pass) };
+    }
+
+    function authJson(){
+        return {
+            "Content-Type": "application/json",
+            "Authorization": "Basic " + btoa(user + ":" + pass)
+        };
+    }
+
+    async function cargar(){
+        setMsg("Cargando tareas...", true);
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/mias", {
+                method: "GET",
+                headers: authOnly()
+            });
+
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+
+            const tareas = await res.json();
+            render(tareas);
+            setMsg(" (" + tareas.length + " tareas)", true);
+        }catch(e){
+            setMsg("Error al cargar: " + e.message, false);
+        }
+    }
+
+    function render(tareas){
+        const tbody = document.getElementById("tbody");
+
+        if(!tareas.length){
+            tbody.innerHTML = `<tr><td colspan="4" class="muted">No hay tareas</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = tareas.map(t => {
+            const est = (t.estado || "").toUpperCase();
+            const badgeClass =
+                est === "PENDIENTE" ? "badge pendiente" :
+                    est === "EN_PROGRESO" ? "badge progreso" :
+                        est === "COMPLETADA" ? "badge completa" :
+                            "badge";
+
+            return `
+      <tr>
+        <td class="tdTitle">${escapeHtml(t.titulo || "")}</td>
+        <td class="muted tdDesc">${escapeHtml(t.descripcion || "")}</td>
+        <td><span class="${badgeClass}">${escapeHtml(est)}</span></td>
+        <td>
+          <div class="actions rowActions">
+            <button class="btn" onclick="pendiente(${t.id})">Pendiente</button>
+            <button class="btn" onclick="progreso(${t.id})">En progreso</button>
+            <button class="btn" onclick="completar(${t.id})">Completar</button>
+            <button class="btn danger" onclick="borrar(${t.id})">Borrar</button>
+          </div>
+        </td>
+      </tr>
+    `;
+        }).join("");
+    }
+
+    function escapeHtml(s){
+        return String(s)
+            .replaceAll("&","&amp;")
+            .replaceAll("<","&lt;")
+            .replaceAll(">","&gt;")
+            .replaceAll('"',"&quot;")
+            .replaceAll("'","&#039;");
+    }
+
+    async function crear(){
+        const titulo = document.getElementById("titulo").value.trim();
+        const descripcion = document.getElementById("descripcion").value.trim();
+
+        if(!titulo){
+            setMsg("El título es obligatorio", false);
+            return;
+        }
+
+        try{
+            const res = await fetch(baseUrl + "/api/tareas", {
+                method: "POST",
+                headers: authJson(),
+                body: JSON.stringify({ titulo, descripcion })
+            });
+
+            if(!res.ok){
+                const txt = await res.text().catch(()=> "");
+                throw new Error(res.status + " " + res.statusText + " " + txt);
+            }
+
+            document.getElementById("titulo").value = "";
+            document.getElementById("descripcion").value = "";
+
+            await cargar();
+        }catch(e){
+            setMsg("Error al crear: " + e.message, false);
+        }
+    }
+
+    async function pendiente(id){
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/" + id + "/pendiente", {
+                method: "PUT",
+                headers: authOnly()
+            });
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+            await cargar();
+        }catch(e){
+            setMsg("Error al marcar pendiente: " + e.message, false);
+        }
+    }
+
+    async function progreso(id){
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/" + id + "/progreso", {
+                method: "PUT",
+                headers: authOnly()
+            });
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+            await cargar();
+        }catch(e){
+            setMsg("Error al pasar a progreso: " + e.message, false);
+        }
+    }
+
+    async function completar(id){
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/" + id + "/completar", {
+                method: "PUT",
+                headers: authOnly()
+            });
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+            await cargar();
+        }catch(e){
+            setMsg("Error al completar: " + e.message, false);
+        }
+    }
+
+    async function borrar(id){
+        if(!confirm("¿Borrar tarea " + id + "?")) return;
+        try{
+            const res = await fetch(baseUrl + "/api/tareas/" + id, {
+                method: "DELETE",
+                headers: authOnly()
+            });
+            if(!res.ok) throw new Error(res.status + " " + res.statusText);
+            await cargar();
+        }catch(e){
+            setMsg("Error al borrar: " + e.message, false);
+        }
+    }
+
+    function logout(){
+        sessionStorage.removeItem(KEYS.base);
+        sessionStorage.removeItem(KEYS.user);
+        sessionStorage.removeItem(KEYS.pass);
+        window.location.href = "login.html";
+    }
+
+    // cargar al abrir
+    cargar();
+</script>
+
+</body>
+</html>
