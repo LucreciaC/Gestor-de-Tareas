@@ -42,6 +42,10 @@ Each user can only access and manage their own tasks.
 - CSS3
 - JavaScript (Fetch API)
 
+### DevOps
+- Docker (multi-stage build)
+- Docker Compose
+
 ---
 
 ## Architecture
@@ -108,7 +112,31 @@ All protected endpoints require HTTP Basic Authentication.
 
 ---
 
-## How to Run
+## Run with Docker (recommended)
+
+Only Docker is required — no local Java or MySQL installation.
+
+1. Create a `.env` file in the project root with the database password:
+
+```
+DB_PASSWORD=choose_a_password
+```
+
+2. Start the application and the database:
+
+```
+docker compose up --build
+```
+
+Docker Compose starts two containers: MySQL 8.4 and the Spring Boot application. The application waits until MySQL is ready, and the data is kept in a Docker volume between restarts.
+
+Access the application at: http://localhost:3035/login.html
+
+To stop it: `docker compose down` (add `-v` to also delete the database data).
+
+---
+
+## How to Run (without Docker)
 
 1. Clone the repository
 
@@ -209,6 +237,10 @@ Cada usuario solo puede acceder y gestionar sus propias tareas.
 - CSS3
 - JavaScript (Fetch API)
 
+### DevOps
+- Docker (build multi-etapa)
+- Docker Compose
+
 ---
 
 ## Arquitectura
@@ -275,7 +307,31 @@ Todos los endpoints protegidos requieren autenticación HTTP Basic.
 
 ---
 
-## Cómo Ejecutar el Proyecto
+## Ejecutar con Docker (recomendado)
+
+Solo se necesita Docker; no hace falta instalar Java ni MySQL.
+
+1. Crear un archivo `.env` en la raíz del proyecto con la contraseña de la base de datos:
+
+```
+DB_PASSWORD=elegi_una_contraseña
+```
+
+2. Levantar la aplicación y la base de datos:
+
+```
+docker compose up --build
+```
+
+Docker Compose levanta dos contenedores: MySQL 8.4 y la aplicación Spring Boot. La aplicación espera a que MySQL esté listo, y los datos se guardan en un volumen de Docker entre reinicios.
+
+Acceder desde: http://localhost:3035/login.html
+
+Para detenerla: `docker compose down` (con `-v` también se borran los datos de la base).
+
+---
+
+## Cómo Ejecutar el Proyecto (sin Docker)
 
 1. Clonar el repositorio
 
