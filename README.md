@@ -1,4 +1,3 @@
-
 # Gestor de Tareas – Task Management Application
 
 ---
@@ -63,11 +62,13 @@ Mappers handle the transformation between Entity objects and DTOs, improving sep
 
 Architecture flow:
 
-Controller → Service → Repository → Database  
-↓  
-Mapper  
-↓  
-DTO
+```
+Controller → Service → Repository → Database
+     ↓
+   Mapper
+     ↓
+    DTO
+```
 
 ---
 
@@ -76,7 +77,7 @@ DTO
 ### User
 - id
 - username
-- password (encrypted with BCrypt)
+- password (hashed with BCrypt)
 - role
 
 ### Task
@@ -86,23 +87,22 @@ DTO
 - status (ENUM)
 - user_id (foreign key)
 
-Relationship:
-One User → Many Tasks
+Relationship: One User → Many Tasks
 
 ---
 
 ## API Endpoints
 
 Public endpoint:
-- POST /api/auth/register
+- `POST /api/auth/register`
 
 Protected endpoints:
-- GET /api/tareas/mias
-- POST /api/tareas
-- PUT /api/tareas/{id}/pendiente
-- PUT /api/tareas/{id}/progreso
-- PUT /api/tareas/{id}/completar
-- DELETE /api/tareas/{id}
+- `GET /api/tareas/mias`
+- `POST /api/tareas`
+- `PUT /api/tareas/{id}/pendiente`
+- `PUT /api/tareas/{id}/progreso`
+- `PUT /api/tareas/{id}/completar`
+- `DELETE /api/tareas/{id}`
 
 All protected endpoints require HTTP Basic Authentication.
 
@@ -112,37 +112,43 @@ All protected endpoints require HTTP Basic Authentication.
 
 1. Clone the repository
 
+```
 git clone https://github.com/YOUR_USERNAME/gestor-de-tareas.git
+```
 
 2. Create the database
 
-CREATE DATABASE tareas_db;
+```sql
+CREATE DATABASE db_tareas;
+```
 
-3. Configure application.properties
+3. Set the environment variables
 
-spring.datasource.url=jdbc:mysql://localhost:3306/tareas_db  
-spring.datasource.username=YOUR_USER  
-spring.datasource.password=YOUR_PASSWORD  
-spring.jpa.hibernate.ddl-auto=update  
-server.port=3035
+Database credentials are not stored in the code. The application reads them from environment variables, listed in `.env.example`:
+
+| Variable | Required | Default |
+|---|---|---|
+| `DB_PASSWORD` | Yes | — |
+| `DB_URL` | No | `jdbc:mysql://localhost:3306/db_tareas` |
+| `DB_USERNAME` | No | `root` |
+
+If `DB_PASSWORD` is missing, the application fails at startup.
 
 4. Run the application
 
+```
 mvn spring-boot:run
+```
 
-Access the application at:
-
-http://localhost:3035/login.html
+Access the application at: http://localhost:3035/login.html
 
 ---
 
 ## Security Notes
 
-The project uses HTTP Basic Authentication for demonstration purposes.
-
-Passwords are encrypted using BCrypt before being stored in the database.
-
-In a production environment, authentication should be upgraded to JWT or token-based authentication.
+- Database credentials are externalized through environment variables, so they are never committed to the repository.
+- Passwords are hashed with BCrypt before being stored in the database.
+- The project uses HTTP Basic Authentication for demonstration purposes. In a production environment, authentication should be upgraded to JWT or token-based authentication.
 
 ---
 
@@ -158,7 +164,7 @@ In a production environment, authentication should be upgraded to JWT or token-b
 
 ## Author
 
-Lucrecia Concatti  
+Lucrecia Concatti
 Java Full-Stack Developer (Junior Level)
 
 ---
@@ -223,11 +229,13 @@ Los Mappers transforman entidades en DTOs y viceversa, mejorando la separación 
 
 Flujo de arquitectura:
 
-Controller → Service → Repository → Base de Datos  
-↓  
-Mapper  
-↓  
-DTO
+```
+Controller → Service → Repository → Base de Datos
+     ↓
+   Mapper
+     ↓
+    DTO
+```
 
 ---
 
@@ -236,7 +244,7 @@ DTO
 ### Usuario
 - id
 - username
-- password (encriptada con BCrypt)
+- password (hasheada con BCrypt)
 - rol
 
 ### Tarea
@@ -246,23 +254,22 @@ DTO
 - estado (ENUM)
 - user_id (clave foránea)
 
-Relación:
-Un Usuario → Muchas Tareas
+Relación: Un Usuario → Muchas Tareas
 
 ---
 
 ## Endpoints Principales
 
 Endpoint público:
-- POST /api/auth/register
+- `POST /api/auth/register`
 
 Endpoints protegidos:
-- GET /api/tareas/mias
-- POST /api/tareas
-- PUT /api/tareas/{id}/pendiente
-- PUT /api/tareas/{id}/progreso
-- PUT /api/tareas/{id}/completar
-- DELETE /api/tareas/{id}
+- `GET /api/tareas/mias`
+- `POST /api/tareas`
+- `PUT /api/tareas/{id}/pendiente`
+- `PUT /api/tareas/{id}/progreso`
+- `PUT /api/tareas/{id}/completar`
+- `DELETE /api/tareas/{id}`
 
 Todos los endpoints protegidos requieren autenticación HTTP Basic.
 
@@ -272,37 +279,43 @@ Todos los endpoints protegidos requieren autenticación HTTP Basic.
 
 1. Clonar el repositorio
 
+```
 git clone https://github.com/TU_USUARIO/gestor-de-tareas.git
+```
 
 2. Crear la base de datos
 
-CREATE DATABASE tareas_db;
+```sql
+CREATE DATABASE db_tareas;
+```
 
-3. Configurar application.properties
+3. Configurar las variables de entorno
 
-spring.datasource.url=jdbc:mysql://localhost:3306/tareas_db  
-spring.datasource.username=TU_USUARIO  
-spring.datasource.password=TU_PASSWORD  
-spring.jpa.hibernate.ddl-auto=update  
-server.port=3035
+Las credenciales de la base de datos no están en el código. La aplicación las lee de variables de entorno, listadas en `.env.example`:
+
+| Variable | Obligatoria | Valor por defecto |
+|---|---|---|
+| `DB_PASSWORD` | Sí | — |
+| `DB_URL` | No | `jdbc:mysql://localhost:3306/db_tareas` |
+| `DB_USERNAME` | No | `root` |
+
+Si falta `DB_PASSWORD`, la aplicación no arranca.
 
 4. Ejecutar la aplicación
 
+```
 mvn spring-boot:run
+```
 
-Acceder desde:
-
-http://localhost:3035/login.html
+Acceder desde: http://localhost:3035/login.html
 
 ---
 
 ## Notas de Seguridad
 
-El proyecto utiliza HTTP Basic Authentication con fines demostrativos.
-
-Las contraseñas se almacenan encriptadas utilizando BCrypt.
-
-En un entorno productivo se recomienda migrar a JWT o autenticación basada en tokens.
+- Las credenciales de la base de datos se externalizan mediante variables de entorno, por lo que nunca se suben al repositorio.
+- Las contraseñas se almacenan hasheadas con BCrypt.
+- El proyecto utiliza HTTP Basic Authentication con fines demostrativos. En un entorno productivo se recomienda migrar a JWT o autenticación basada en tokens.
 
 ---
 
@@ -318,5 +331,5 @@ En un entorno productivo se recomienda migrar a JWT o autenticación basada en t
 
 ## Autora
 
-Lucrecia Concatti  
+Lucrecia Concatti
 Desarrolladora Java Full-Stack (Nivel Junior)
