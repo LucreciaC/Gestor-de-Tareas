@@ -61,8 +61,9 @@ public class TareaController {
     }
 
     @PutMapping("/{id}/pendiente")
-    public ResponseEntity<?> marcarPendiente(@PathVariable Long id) {
-        tareaService.marcarPendiente(id);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<TareaDTO> marcarPendiente(@PathVariable Long id, Principal principal) {
+        String username = principal.getName();
+        TareaDTO actualizada = tareaService.marcarPendiente(id, username);
+        return ResponseEntity.ok(actualizada);
     }
 }

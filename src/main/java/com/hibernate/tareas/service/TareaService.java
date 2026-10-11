@@ -5,6 +5,8 @@ import com.hibernate.tareas.DTO.TareaDTO;
 import com.hibernate.tareas.entity.EstadoTarea;
 import com.hibernate.tareas.entity.Tarea;
 import com.hibernate.tareas.entity.Usuario;
+import com.hibernate.tareas.exception.AccesoDenegadoException;
+import com.hibernate.tareas.exception.RecursoNoEncontradoException;
 import com.hibernate.tareas.mapper.TareaMapper;
 import com.hibernate.tareas.repository.TareaRepository;
 import com.hibernate.tareas.repository.UsuarioRepository;
@@ -25,7 +27,7 @@ public class TareaService {
 
     public TareaDTO crearTarea(TareaCreateDTO dto, String username) {
         Usuario owner = usuarioRepository.findByUsuario(username)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado: " + username));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado: " + username));
 
         Tarea tarea = TareaMapper.toEntity(dto);
         tarea.setOwner(owner);
@@ -48,12 +50,12 @@ public class TareaService {
 
     public TareaDTO completarTarea(Long tareaId, String username) {
         Tarea tarea = tareaRepository.findById(tareaId)
-                .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + tareaId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada con id: " + tareaId));
 
         // Validación CLAVE: que la tarea sea del usuario logueado
         String ownerUsername = tarea.getOwner().getUsuario();
         if (!ownerUsername.equals(username)) {
-            throw new RuntimeException("No tenés permiso para modificar esta tarea.");
+            throw new AccesoDenegadoException("No tenés permiso para modificar esta tarea.");
         }
 
         tarea.setEstado(EstadoTarea.COMPLETADA);
@@ -65,11 +67,11 @@ public class TareaService {
     public void eliminarTarea(Long tareaId, String username) {
 
         Tarea tarea = tareaRepository.findById(tareaId)
-                .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + tareaId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada con id: " + tareaId));
 
         // Validación de dueño
         if (!tarea.getOwner().getUsuario().equals(username)) {
-            throw new RuntimeException("No tenés permiso para eliminar esta tarea.");
+            throw new AccesoDenegadoException("No tenés permiso para eliminar esta tarea.");
         }
 
         tareaRepository.delete(tarea);
@@ -77,10 +79,10 @@ public class TareaService {
 
     public TareaDTO ponerEnProgreso(Long tareaId, String username) {
         Tarea tarea = tareaRepository.findById(tareaId)
-                .orElseThrow(() -> new RuntimeException("Tarea no encontrada con id: " + tareaId));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada con id: " + tareaId));
 
         if (!tarea.getOwner().getUsuario().equals(username)) {
-            throw new RuntimeException("No tenés permiso para modificar esta tarea.");
+            throw new AccesoDenegadoException("No tenés permiso para modificar esta tarea.");
         }
 
         tarea.setEstado(EstadoTarea.EN_PROGRESO);
@@ -89,11 +91,17 @@ public class TareaService {
         return TareaMapper.toDTO(guardada);
     }
 
-    public void marcarPendiente(Long id) {
-        Tarea tarea = tareaRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("No encontrada"));
+    public TareaDTO marcarPendiente(Long tareaId, String username) {
+        Tarea tarea = tareaRepository.findById(tareaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tarea no encontrada con id: " + tareaId));
+
+        if (!tarea.getOwner().getUsuario().equals(username)) {
+            throw new AccesoDenegadoException("No tenés permiso para modificar esta tarea.");
+        }
 
         tarea.setEstado(EstadoTarea.PENDIENTE);
-        tareaRepository.save(tarea);
+        Tarea guardada = tareaRepository.save(tarea);
+
+        return TareaMapper.toDTO(guardada);
     }
 }
